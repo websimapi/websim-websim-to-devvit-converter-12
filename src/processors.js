@@ -250,9 +250,9 @@ export class AssetAnalyzer {
             return '<!-- Import Map Removed by Converter -->';
         });
 
-        // 2. Inject Polyfills (Logger, Socket) - Now extracted to separate files in client/
+        // 2. Inject Polyfills (Logger, Stubs) - Socket/Bridge is handled dynamically by WebSimDetector
         // We will inject <script src="./logger.js"></script> etc.
-        const polyfills = `<script type="module" src="./logger.js"></script>\n    <script type="module" src="./websim_stubs.js"></script>\n    <script type="module" src="./websim_socket.js"></script>`;
+        const polyfills = `<script type="module" src="./logger.js"></script>\n    <script type="module" src="./websim_stubs.js"></script>`;
         if (html.includes('<head>')) {
             html = html.replace('<head>', '<head>\n    ' + polyfills);
         } else {

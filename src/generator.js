@@ -164,11 +164,9 @@ export { Player } from '@remotion/player';
     const srcFolder = zip.folder("src");
     srcFolder.file("main.tsx", getMainTsx(projectTitle, indexPath));
     
-    // Add server-side Devvit Bridge if WebSim APIs detected
-    if (apiSummary.needsDevvitBridge) {
-        console.log('[Generator] Adding server-side Devvit bridge...');
-        srcFolder.file("devvit-bridge.ts", getDevvitBridgeServerCode());
-    }
+    // Add server-side Devvit Bridge (Always required by main.tsx)
+    // Even if not used by client, the server wrapper expects it to exist.
+    srcFolder.file("devvit-bridge.ts", getDevvitBridgeServerCode());
 
     console.log('[Generator] Conversion complete!');
     
