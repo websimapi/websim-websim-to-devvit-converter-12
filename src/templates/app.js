@@ -1,5 +1,5 @@
 export function getMainTsx(title, webviewPath) {
-  return `import { Devvit } from '@devvit/public-api';
+  return `import { Devvit, useState, useAsync } from '@devvit/public-api';
 import { DevvitBridge } from './devvit-bridge.js';
 
 Devvit.configure({
@@ -26,10 +26,10 @@ Devvit.addCustomPostType({
     const bridge = activeBridges.get(postId)!;
     
     // Fetch user identity on mount
-    const [userInfo, setUserInfo] = context.useState<any>(null);
-    const [isReady, setIsReady] = context.useState(false);
+    const [userInfo, setUserInfo] = useState<any>(null);
+    const [isReady, setIsReady] = useState(false);
     
-    context.useAsync(async () => {
+    useAsync(async () => {
       try {
         // Get current user info with avatar
         const user = await context.reddit.getCurrentUser();
@@ -102,7 +102,7 @@ Devvit.addCustomPostType({
     if (context.realtime) {
       const mainChannel = context.realtime.channel('post:main');
       
-      context.useAsync(async () => {
+      useAsync(async () => {
         await mainChannel.subscribe((msg) => {
           // Forward realtime messages to webview
           context.ui.webView.postMessage('game-webview', {

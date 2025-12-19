@@ -514,11 +514,12 @@ export const jsxDEV = (type, props, key, isStaticChildren, source, self) => {
 
 export const websimPackageJs = `
 // Bridge for "import websim from 'websim'"
-const w = window.websim || {};
-export default w;
-// Export common methods if destructured
-export const getProject = w.getProject;
-export const getCurrentUser = w.getCurrentUser;
-export const upload = w.upload;
+export const getProject = (...args) => window.websim?.getProject?.(...args);
+export const getCurrentUser = (...args) => window.websim?.getCurrentUser?.(...args);
+export const upload = (...args) => window.websim?.upload?.(...args);
+
+export default new Proxy({}, {
+    get: (target, prop) => window.websim?.[prop]
+});
 `;
 
