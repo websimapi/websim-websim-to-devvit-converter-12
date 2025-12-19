@@ -1,4 +1,4 @@
-export const websimToDevvitPolyfill = \`
+export const websimToDevvitPolyfill = `
 (function() {
   console.log('[Devvit Bridge] Initializing WebSim compatibility layer...');
 
@@ -183,9 +183,9 @@ export const websimToDevvitPolyfill = \`
 
   console.log('[Devvit Bridge] WebSim compatibility layer ready!');
 })();
-\`;
+`;
 
-export const getDevvitBridgeServerCode = () => \`// src/devvit-bridge.ts
+export const getDevvitBridgeServerCode = () => `// src/devvit-bridge.ts
 // Server-side bridge for WebSim → Devvit API translation
 
 import type { Context } from '@devvit/public-api';
@@ -449,5 +449,5 @@ export class DevvitBridge {
     return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%233b82f6"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="white" font-size="40" font-family="Arial"%3E?%3C/text%3E%3C/svg%3E';
   }
 }
-\`;
+`;
 
