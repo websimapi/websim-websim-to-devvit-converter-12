@@ -193,10 +193,15 @@ import type { Context } from '@devvit/public-api';
 export class DevvitBridge {
   private context: Context;
   private messageHandlers: Map<string, Function> = new Map();
+  private channel: any | null = null;
   
   constructor(context: Context) {
     this.context = context;
     this.setupHandlers();
+  }
+
+  public setChannel(channel: any) {
+    this.channel = channel;
   }
 
   private setupHandlers() {
@@ -294,9 +299,20 @@ export class DevvitBridge {
   
   private async handleRealtimeJoin(data: { channelName: string }) {
     try {
-      const channel = this.context.realtime.channel(data.channelName);
-      await channel.subscribe();
-      return { success: true, channelId: data.channelName };
+      // If we have a UI hook channel (useChannel), we are already subscribed.
+      // We assume single-channel usage for now (post:main).
+      if (this.channel) {
+        return { success: true, channelId: data.channelName };
+      }
+
+      // Fallback for server-side contexts (Triggers/Jobs) if applicable
+      if (this.context.realtime && typeof this.context.realtime.channel === 'function') {
+        const channel = this.context.realtime.channel(data.channelName);
+        await channel.subscribe();
+        return { success: true, channelId: data.channelName };
+      }
+      
+      return { success: true, warning: 'Realtime simulation mode (no channel)' };
     } catch (error: any) {
       console.error('[Realtime] join error:', error);
       return { success: false, error: error.message };
@@ -305,9 +321,18 @@ export class DevvitBridge {
 
   private async handleRealtimeSend(data: { channelName: string, message: any }) {
     try {
-      const channel = this.context.realtime.channel(data.channelName);
-      await channel.send(data.message);
-      return { success: true };
+      if (this.channel) {
+        await this.channel.send(data.message);
+        return { success: true };
+      }
+
+      if (this.context.realtime && typeof this.context.realtime.channel === 'function') {
+        const channel = this.context.realtime.channel(data.channelName);
+        await channel.send(data.message);
+        return { success: true };
+      }
+      
+      return { success: false, error: 'No active channel connection' };
     } catch (error: any) {
       console.error('[Realtime] send error:', error);
       return { success: false, error: error.message };
@@ -316,18 +341,23 @@ export class DevvitBridge {
 
   private async handleUpdatePresence(data: { channelName: string, presence: any }) {
     try {
-      const channel = this.context.realtime.channel(data.channelName);
       const userId = this.context.userId || 'anonymous';
       const presenceKey = \`presence:\${data.channelName}:\${userId}\`;
       
       await this.context.redis.set(presenceKey, JSON.stringify(data.presence));
       await this.context.redis.expire(presenceKey, 30);
       
-      await channel.send({
+      const msg = {
         type: 'presence_update',
         userId,
         presence: data.presence
-      });
+      };
+
+      if (this.channel) {
+         await this.channel.send(msg);
+      } else if (this.context.realtime && typeof this.context.realtime.channel === 'function') {
+         await this.context.realtime.channel(data.channelName).send(msg);
+      }
       
       return { success: true };
     } catch (error: any) {
@@ -338,15 +368,20 @@ export class DevvitBridge {
 
   private async handleUpdateRoomState(data: { channelName: string, state: any }) {
     try {
-      const channel = this.context.realtime.channel(data.channelName);
       const stateKey = \`roomstate:\${data.channelName}\`;
       
       await this.context.redis.set(stateKey, JSON.stringify(data.state));
       
-      await channel.send({
+      const msg = {
         type: 'roomstate_update',
         state: data.state
-      });
+      };
+
+      if (this.channel) {
+         await this.channel.send(msg);
+      } else if (this.context.realtime && typeof this.context.realtime.channel === 'function') {
+         await this.context.realtime.channel(data.channelName).send(msg);
+      }
       
       return { success: true };
     } catch (error: any) {

@@ -1,5 +1,5 @@
 export function getMainTsx(title, webviewPath) {
-  return `import { Devvit, useState, useAsync } from '@devvit/public-api';
+  return `import { Devvit, useState, useAsync, useChannel } from '@devvit/public-api';
 import { DevvitBridge } from './devvit-bridge.js';
 
 Devvit.configure({
@@ -24,6 +24,24 @@ Devvit.addCustomPostType({
     }
     
     const bridge = activeBridges.get(postId)!;
+
+    // --- Realtime Setup ---
+    const channel = useChannel({
+      name: 'post:main',
+      onMessage: (msg) => {
+        // Forward realtime messages to webview
+        context.ui.webView.postMessage('game-webview', {
+          type: 'devvit-realtime',
+          data: { message: msg }
+        });
+      },
+    });
+
+    // Auto-subscribe
+    channel.subscribe();
+    
+    // Provide channel to bridge for sending
+    bridge.setChannel(channel);
     
     // Fetch user identity on mount
     const [userInfo, setUserInfo] = useState<any>(null);
@@ -98,20 +116,7 @@ Devvit.addCustomPostType({
       }
     };
     
-    // Listen for realtime messages and forward to webview
-    if (context.realtime) {
-      const mainChannel = context.realtime.channel('post:main');
-      
-      useAsync(async () => {
-        await mainChannel.subscribe((msg) => {
-          // Forward realtime messages to webview
-          context.ui.webView.postMessage('game-webview', {
-            type: 'devvit-realtime',
-            data: { message: msg }
-          });
-        });
-      }, { depends: [] });
-    }
+    // (Realtime listening is handled by useChannel above)
     
     if (!isReady) {
       return (
